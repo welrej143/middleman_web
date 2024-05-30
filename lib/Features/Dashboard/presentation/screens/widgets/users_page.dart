@@ -62,12 +62,22 @@ class _UsersPageState extends State<UsersPage> {
             child: SingleChildScrollView(
               child: DataTable(
                 columns: const [
+                  DataColumn(label: Text('First Name')),
+                  DataColumn(label: Text('Middle Name')),
+                  DataColumn(label: Text('Last Name')),
+                  DataColumn(label: Text('Birthday')),
+                  DataColumn(label: Text('Address')),
                   DataColumn(label: Text('Email')),
                   DataColumn(label: Text('Verification Status')),
                   DataColumn(label: Text('Ban')),
                 ],
                 rows: filteredUsers.map((user) {
                   return DataRow(cells: [
+                    DataCell(Text(user.firstName)),
+                    DataCell(Text(user.middleName)),
+                    DataCell(Text(user.lastName)),
+                    DataCell(Text(user.birthday)),
+                    DataCell(Text(user.address)),
                     DataCell(Text(user.email)),
                     DataCell(Text(user.isVerified ? 'Verified' : 'Unverified')),
                     DataCell(
