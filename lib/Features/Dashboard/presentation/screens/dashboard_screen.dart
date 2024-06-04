@@ -4,6 +4,7 @@ import 'package:untitled/Features/Dashboard/presentation/screens/widgets/dispute
 import 'package:untitled/Features/Dashboard/presentation/screens/widgets/reports_page.dart';
 import 'package:untitled/Features/Dashboard/presentation/screens/widgets/settings_page.dart';
 import 'package:untitled/Features/Dashboard/presentation/screens/widgets/transaction_page.dart';
+import 'package:untitled/Features/Dashboard/presentation/screens/widgets/users_page.dart';
 import 'package:untitled/Features/Dashboard/presentation/screens/widgets/verification_page.dart';
 import 'package:untitled/Features/Dashboard/presentation/screens/widgets/withdraw_page.dart';
 
@@ -129,101 +130,6 @@ class User {
       email: data['email'] ?? '',
       isVerified: data['isVerified'] ?? false,
       isBanned: data['isBanned'] ?? false,
-    );
-  }
-}
-
-class UsersPage extends StatefulWidget {
-  const UsersPage({Key? key}) : super(key: key);
-
-  @override
-  State<UsersPage> createState() => _UsersPageState();
-}
-
-class _UsersPageState extends State<UsersPage> {
-  List<User> _users = [];
-  String _searchQuery = '';
-
-  @override
-  void initState() {
-    super.initState();
-    _fetchUsers();
-  }
-
-  Future<void> _fetchUsers() async {
-    QuerySnapshot querySnapshot = await FirebaseFirestore.instance.collection('users').get();
-    setState(() {
-      _users = querySnapshot.docs.map((doc) => User.fromFirestore(doc)).toList();
-    });
-  }
-
-  void _toggleBan(User user) async {
-    // Query the document with the user's email
-    QuerySnapshot querySnapshot = await FirebaseFirestore.instance
-        .collection('users')
-        .where('email', isEqualTo: user.email)
-        .limit(1)
-        .get();
-
-    if (querySnapshot.docs.isNotEmpty) {
-      DocumentSnapshot doc = querySnapshot.docs.first;
-      await doc.reference.update({'isBanned': !user.isBanned});
-      setState(() {
-        user.isBanned = !user.isBanned;
-      });
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final filteredUsers = _users.where((user) {
-      return user.email.toLowerCase().contains(_searchQuery.toLowerCase());
-    }).toList();
-
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        children: [
-          TextField(
-            decoration: InputDecoration(
-              labelText: 'Search',
-              prefixIcon: Icon(Icons.search),
-              border: OutlineInputBorder(),
-            ),
-            onChanged: (value) {
-              setState(() {
-                _searchQuery = value;
-              });
-            },
-          ),
-          const SizedBox(height: 16),
-          Expanded(
-            child: SingleChildScrollView(
-              child: DataTable(
-                columns: const [
-                  DataColumn(label: Text('Email')),
-                  DataColumn(label: Text('Verification Status')),
-                  DataColumn(label: Text('Ban')),
-                ],
-                rows: filteredUsers.map((user) {
-                  return DataRow(cells: [
-                    DataCell(Text(user.email)),
-                    DataCell(Text(user.isVerified ? 'Verified' : 'Unverified')),
-                    DataCell(
-                      Switch(
-                        value: user.isBanned,
-                        onChanged: (value) {
-                          _toggleBan(user);
-                        },
-                      ),
-                    ),
-                  ]);
-                }).toList(),
-              ),
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

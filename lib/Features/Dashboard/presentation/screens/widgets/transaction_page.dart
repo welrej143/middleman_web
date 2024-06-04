@@ -9,13 +9,15 @@ class TransactionPage extends StatefulWidget {
   State<TransactionPage> createState() => _TransactionPageState();
 }
 
-class _TransactionPageState extends State<TransactionPage> {
+class _TransactionPageState extends State<TransactionPage> with SingleTickerProviderStateMixin {
   List<TransactionModel> _transactions = [];
   String _searchQuery = '';
+  late TabController _tabController;
 
   @override
   void initState() {
     super.initState();
+    _tabController = TabController(length: 3, vsync: this);
     _fetchTransactions();
   }
 
@@ -48,7 +50,19 @@ class _TransactionPageState extends State<TransactionPage> {
 
   @override
   Widget build(BuildContext context) {
-    final filteredTransactions = _transactions.where((transaction) {
+    final ongoingTransactions = _transactions.where((transaction) => transaction.status != 'completed' && transaction.status != 'cancelled').toList();
+    final completedTransactions = _transactions.where((transaction) => transaction.status == 'completed').toList();
+    final cancelledTransactions = _transactions.where((transaction) => transaction.status == 'cancelled').toList();
+
+    final filteredOngoingTransactions = ongoingTransactions.where((transaction) {
+      return transaction.transactionId.toLowerCase().contains(_searchQuery.toLowerCase());
+    }).toList();
+
+    final filteredCompletedTransactions = completedTransactions.where((transaction) {
+      return transaction.transactionId.toLowerCase().contains(_searchQuery.toLowerCase());
+    }).toList();
+
+    final filteredCancelledTransactions = cancelledTransactions.where((transaction) {
       return transaction.transactionId.toLowerCase().contains(_searchQuery.toLowerCase());
     }).toList();
 
@@ -70,47 +84,67 @@ class _TransactionPageState extends State<TransactionPage> {
             },
           ),
           const SizedBox(height: 16),
+          TabBar(
+            controller: _tabController,
+            tabs: const [
+              Tab(text: 'Ongoing'),
+              Tab(text: 'Completed'),
+              Tab(text: 'Cancelled'),
+            ],
+          ),
+          const SizedBox(height: 16),
           Expanded(
-            child: SingleChildScrollView(
-              child: DataTable(
-                columns: const [
-                  DataColumn(label: Text('Amount')),
-                  DataColumn(label: Text('Buyer')),
-                  DataColumn(label: Text('Description')),
-                  DataColumn(label: Text('Proof Of Delivery')),
-                  DataColumn(label: Text('Seller')),
-                  DataColumn(label: Text('Status')),
-                  DataColumn(label: Text('Timestamp')),
-                  DataColumn(label: Text('Transaction ID')),
-                ],
-                rows: filteredTransactions.map((transaction) {
-                  return DataRow(cells: [
-                    DataCell(Text(transaction.amount.toString())),
-                    DataCell(Text(transaction.buyer)),
-                    DataCell(Text(transaction.description)),
-                    DataCell(
-                      transaction.proofOfDeliveryUrl.isNotEmpty
-                          ? GestureDetector(
-                        onTap: () => _showImage(transaction.proofOfDeliveryUrl),
-                        child: Image.network(
-                          transaction.proofOfDeliveryUrl,
-                          width: 50,
-                          height: 50,
-                          fit: BoxFit.cover,
-                        ),
-                      )
-                          : Text('No Proof'),
-                    ),
-                    DataCell(Text(transaction.seller)),
-                    DataCell(Text(transaction.status)),
-                    DataCell(Text(transaction.timestamp.toDate().toString())),
-                    DataCell(Text(transaction.transactionId)),
-                  ]);
-                }).toList(),
-              ),
+            child: TabBarView(
+              controller: _tabController,
+              children: [
+                _buildTransactionTable(filteredOngoingTransactions),
+                _buildTransactionTable(filteredCompletedTransactions),
+                _buildTransactionTable(filteredCancelledTransactions),
+              ],
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildTransactionTable(List<TransactionModel> transactions) {
+    return SingleChildScrollView(
+      child: DataTable(
+        columns: const [
+          DataColumn(label: Text('Amount')),
+          DataColumn(label: Text('Buyer')),
+          DataColumn(label: Text('Description')),
+          DataColumn(label: Text('Proof Of Delivery')),
+          DataColumn(label: Text('Seller')),
+          DataColumn(label: Text('Status')),
+          DataColumn(label: Text('Timestamp')),
+          DataColumn(label: Text('Transaction ID')),
+        ],
+        rows: transactions.map((transaction) {
+          return DataRow(cells: [
+            DataCell(Text(transaction.amount.toString())),
+            DataCell(Text(transaction.buyer)),
+            DataCell(Text(transaction.description)),
+            DataCell(
+              transaction.proofOfDeliveryUrl.isNotEmpty
+                  ? GestureDetector(
+                onTap: () => _showImage(transaction.proofOfDeliveryUrl),
+                child: Image.network(
+                  transaction.proofOfDeliveryUrl,
+                  width: 50,
+                  height: 50,
+                  fit: BoxFit.cover,
+                ),
+              )
+                  : Text('No Proof'),
+            ),
+            DataCell(Text(transaction.seller)),
+            DataCell(Text(transaction.status)),
+            DataCell(Text(transaction.timestamp.toDate().toString())),
+            DataCell(Text(transaction.transactionId)),
+          ]);
+        }).toList(),
       ),
     );
   }
@@ -123,9 +157,9 @@ class _TransactionPageState extends State<TransactionPage> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Image.network(
+              imageUrl,
               width: 300,
               height: 300,
-              imageUrl,
             ),
             TextButton(
               onPressed: () => Navigator.of(context).pop(),

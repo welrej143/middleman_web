@@ -34,9 +34,9 @@ class _VerificationPageState extends State<VerificationPage> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Image.network(
+              imageUrl,
               width: 300,
               height: 300,
-              imageUrl,
             ),
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
@@ -76,6 +76,33 @@ class _VerificationPageState extends State<VerificationPage> {
     }
   }
 
+  void _showDetails(Verification verification) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Verification Details'),
+        content: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text('First Name: ${verification.firstName}'),
+            Text('Middle Name: ${verification.middleName}'),
+            Text('Last Name: ${verification.lastName}'),
+            Text('Birthday: ${verification.birthday}'),
+            Text('Phone Number: ${verification.phoneNumber}'),
+            Text('Address: ${verification.address}'),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Close'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final filteredVerifications = _verifications.where((verification) {
@@ -103,6 +130,9 @@ class _VerificationPageState extends State<VerificationPage> {
             child: SingleChildScrollView(
               child: DataTable(
                 columns: const [
+                  DataColumn(label: Text('First Name')),
+                  DataColumn(label: Text('Middle Name')),
+                  DataColumn(label: Text('Last Name')),
                   DataColumn(label: Text('Email')),
                   DataColumn(label: Text('ID Type')),
                   DataColumn(label: Text('Back ID')),
@@ -112,6 +142,14 @@ class _VerificationPageState extends State<VerificationPage> {
                 ],
                 rows: filteredVerifications.map((verification) {
                   return DataRow(cells: [
+                    DataCell(
+                      InkWell(
+                        onTap: () => _showDetails(verification),
+                        child: Text(verification.firstName),
+                      ),
+                    ),
+                    DataCell(Text(verification.middleName)),
+                    DataCell(Text(verification.lastName)),
                     DataCell(Text(verification.email)),
                     DataCell(Text(verification.selectedId)),
                     DataCell(
